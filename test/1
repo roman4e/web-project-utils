@@ -1,0 +1,6 @@
+PHP Warning:  Illegal offset type in isset or empty in /home/cap/Hosting/lib/utils.lists.php on line 191
+PHP Stack trace:
+PHP   1. {main}() /home/cap/Hosting/lib/test/utils.lists.php:0
+PHP   2. Utils\Lists\DoublyLinked->insert_bottom($key = 'bottom_key', $value = 'bottom_value') /home/cap/Hosting/lib/test/utils.lists.php:12
+PHP   3. Utils\Lists\DoublyLinked->insert_after($ofs = 'top_key', $key = 'bottom_key', $value = 'bottom_value') /home/cap/Hosting/lib/utils.lists.php:266
+PHP   4. Utils\Lists\DoublyLinked->offset($ofs = class Utils\Lists\DoublyLinkedElement { private $owner = class Utils\Lists\DoublyLinked { private $list = array (...); private $top = 'top_key'; private $bottom = 'top_key'; private $current = 'top_key'; private $null = class Utils\Lists\DoublyLinkedElement { ... }; private $groups = array (...) }; private $key = NULL; private $next = NULL; private $prev = NULL; public $value = 'top_value'; private $group = NULL; private $allow_set = TRUE }) /home/cap/Hosting/lib/utils.lists.php:251
