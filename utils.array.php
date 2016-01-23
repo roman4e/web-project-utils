@@ -10,21 +10,21 @@ namespace Utils\A;
 // <callback> $trimmer - your trimmer instead of trim()
 function trim(array &$array,$chars=null,$empty_lines=false,$trimmer=null)
 {
-	$chars = $chars ?? " \t\r\n"
+	$chars = $chars ?? " \t\r\n";
 	if ( empty($array) )
 		return false;
 
 	$trimmer = $trimmer ?? '\trim';
 
-	\array_walk($array,function(&$value)
+	\array_walk($array,function(&$value) use ($trimmer)
 	{
 		if ( !\is_scalar($value) )
 			return;
 
-		$value = $trim($value);
+		$value = $trimmer($value);
 	});
 
-	$array = \array_filter($array, function($value)
+	$array = \array_filter($array, function($value) use ($empty_lines)
 	{
 		if ( !\is_scalar($value) )
 			return true;
