@@ -118,6 +118,8 @@ foreach ( $dl as $key=>$value )
 {
 	echo "$key = $value\n";
 }
+echo "Reset insert flag\n";
+$dl->insert_flag = $dl::INSERT_DEFAULT;
 
 echo "---\n";
 echo "insert after undefined element\n";
@@ -147,3 +149,19 @@ $item = $dl("hack_item")->lookup(-5);
 assert($item->key === "before_1");
 echo "5th element before hack_item is ".$item->key."\n";
 unset($item);
+
+echo "---\n";
+echo "Moving\n";
+$item = $dl->insert_before("hack_item","to_move_item","moving value");
+echo "Previous to new item named 'to_move_item' is ".$item->prev." and next to is ".$item->next."\n";
+echo "Move it 6 points back and the 4 points forward\n";
+$item = $item->move_distance(-6);
+echo "1st move, previous to item is ".$item->prev." and next to is ".$item->next."\n";
+$item = $item->move_distance(4);
+echo "2nd move, previous to item is ".$item->prev." and next to is ".$item->next."\n";
+
+echo "traverse foreach:\n";
+foreach ( $dl as $key=>$value )
+{
+	echo "$key = $value\n";
+}

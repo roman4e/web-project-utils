@@ -233,6 +233,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	}
 
 	// ------------------------------------------------------------------------
+	// * Remove $ofs item from list and collapse left empty space between siblings
 	private function free_item($ofs,$remove=false)
 	{
 // var_dump("UNSET({$ofs})");
@@ -293,6 +294,9 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// * get element at offset or null element
 	private function &offset($ofs)
 	{
+		if ( $ofs instanceof DoublyLinkedElement )
+			return $ofs;
+
 		if ( \is_null($ofs) || !isset($this->list[$ofs]) )
 			$ret = &$this->null_elem();
 		else
@@ -318,7 +322,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	}
 
 	// ------------------------------------------------------------------------
-	// * check and set edges if needed
+	// * check and set item edges if needed
 	private function refresh_edges(&$new)
 	{
 		$key = $new->key;
@@ -475,6 +479,8 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	}
 
 	// ------------------------------------------------------------------------
+	// * Remove items from list and return them as array
+	// May be deprecated
 	protected function slice($ofs,$count)
 	{
 		$this->reset_insert_counters();
@@ -511,10 +517,10 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	}
 
 	// ------------------------------------------------------------------------
-	protected function unslice_after($after_key,array $slice)
-	{
+	// protected function unslice_after($after_key,array $slice)
+	// {
 
-	}
+	// }
 
 	// ------------------------------------------------------------------------
 	public function move_after($ofs,$after_key)
@@ -537,17 +543,47 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 		if ( $item->fake )
 			return $item;
 
-		$this->insert_item_before($before_key,$item);
+		return $this->insert_item_before($before_key,$item);
 	}
 
 	public function move_top($ofs)
 	{
+		$item = $this->free_item($ofs);
 
+		if ( $item->fake )
+			return $item;
+
+		return $this->insert_item_before($this->top,$item);
 	}
 
 	public function move_bottom($ofs)
 	{
+		$item = $this->free_item($ofs);
 
+		if ( $item->fake )
+			return $item;
+
+		return $this->insert_item_after($this->bottom,$item);
+	}
+
+	// * Move an element by $distance
+	public function move_distance($ofs,$distance=1)
+	{
+		$item = $this->offset($ofs);
+
+		if ( $item->fake || $distance == 0 )
+			return $item;
+
+		$item2 = $this->lookup($ofs,$distance);
+
+		if ( $item2->fake )
+			return $item;
+
+		$item = $this->free_item($ofs);
+		if ( $distance > 0 )
+			return $this->insert_item_after($item2,$item);
+		else
+			return $this->insert_item_before($item2,$item);
 	}
 	// ------------------------------------------------------------------------
 //	public function group($name)
@@ -709,6 +745,8 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	public function distance($ofs,$ofs2,$seekway=self::SEEK_BOTH)
 	{
 		$item2 = &$this->offset($ofs2);
+		if ( $item2->fake )
+			return false;
 
 		if ( $seekway & self::SEEK_BEFORE )
 		{
@@ -741,6 +779,9 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	public function lookup($ofs,$distance=1)
 	{
 		$item = &$this->offset($ofs);
+
+		if ( $item->fake )
+			return $item;
 
 		if ( $distance < 0)
 			$move = 1;
@@ -882,19 +923,28 @@ class DoublyLinkedElement
 
 	}
 
+	// * Check is it before $ofs
 	public function is_before($ofs)
 	{
 		return $this->owner->distance($this->key,$ofs) > 0;
 	}
 
+	// * Check is it after $ofs
 	public function is_after($ofs)
 	{
 		return $this->owner->distance($this->key,$ofs) < 0;
 	}
 
+	// * Lookup other item by $distance from current
 	public function lookup($distance=1)
 	{
 		return $this->owner->lookup($this->key,$distance);
+	}
+
+	// * Move item by $distance
+	public function move_distance($distance=1)
+	{
+		return $this->owner->move_distance($this->key,$distance);
 	}
 }
 
@@ -1022,5 +1072,4 @@ class DoublyLinkedGroup implements \ArrayAccess, \Countable
 		if ( $r=$this->has($ofs) )
 			return $this->owner->item($this->items[$r]);
 	}
-
 }
