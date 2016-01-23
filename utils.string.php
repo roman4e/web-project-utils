@@ -53,3 +53,49 @@ function to_csv_string(array $values, $delim=",", $enclose='"')
 
 	return $str;
 }
+
+function pcre_fnmatch($pattern, $string, $flags = 0, &$match=null)
+{
+	$modifiers = null;
+	$transforms = array(
+		'\*'    => '.*',
+		'\?'    => '.',
+		'\[\!'    => '[^',
+		'\['    => '[',
+		'\]'    => ']',
+		'\.'    => '\.',
+		'\\'    => '\\\\'
+	);
+
+	// Forward slash in string must be in pattern:
+	if ($flags & FNM_PATHNAME)
+	{
+		$transforms['\*'] = '[^/]*';
+	}
+
+	// Back slash should not be escaped:
+	if ($flags & FNM_NOESCAPE)
+	{
+		unset($transforms['\\']);
+	}
+
+	// Perform case insensitive match:
+	if ($flags & FNM_CASEFOLD)
+	{
+		$modifiers .= 'i';
+	}
+
+	// Period at start must be the same as pattern:
+	if ($flags & FNM_PERIOD)
+	{
+		if (strpos($string, '.') === 0 && strpos($pattern, '.') !== 0)
+			return false;
+	}
+
+	$pattern = '#^'
+		. strtr(preg_quote($pattern, '#'), $transforms)
+		. '$#'
+		. $modifiers;
+
+	return (boolean)preg_match($pattern, $string, $match);
+}

@@ -32,12 +32,12 @@ function trim(array &$array)
 function coalesce()
 {
 	$arr = \func_get_args();
-	return array_coalesce($arr);
+	return coalescea($arr);
 }
 
 // * Returns first non null item
 // # value or <null> if fail
-function array_coalesce(array $arr)
+function coalescea(array $arr)
 {
 	foreach ( $arr as $v )
 	{
@@ -49,10 +49,24 @@ function array_coalesce(array $arr)
 
 // * Returns first non null or non false argument
 // # key or <null> if fail
-function coalesce_num()
+function coalescenf()
 {
 	$arr = \func_get_args();
-	return array_coalesce_num($arr);
+	return coalescea_nf($arr);
+}
+
+// * Return first non null or non false array element
+// # key or <null> if fail
+function coalescea_nf(array $arr)
+{
+	foreach ( $arr as $val )
+	{
+		if ( !\is_null($val) || $val !== false )
+		{
+			return $val;
+		}
+	}
+	return null;
 }
 
 // * Returns key which value is not null
@@ -69,7 +83,7 @@ function coalesce_key(array $arr)
 
 // * Returns key which value is not null or false
 // # key or <null> if fail
-function coalesce_key_nf(array $arr)
+function coalescea_key_nf(array $arr)
 {
 	foreach ( $arr as $k=>$arg )
 	{
