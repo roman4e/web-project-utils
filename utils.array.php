@@ -4,24 +4,31 @@ namespace Utils\A;
 
 // * Function trims each row and removes empty
 // Does not affect on non-scalar values
-function trim(array &$array)
+// <array> $array - your array
+// <string> $chars - chars to trim
+// <bool> $empty_lines - leave empty lines
+// <callback> $trimmer - your trimmer instead of trim()
+function trim(array &$array,$chars=null,$empty_lines=false,$trimmer=null)
 {
+	$chars = $chars ?? " \t\r\n"
 	if ( empty($array) )
 		return false;
+
+	$trimmer = $trimmer ?? '\trim';
 
 	\array_walk($array,function(&$value)
 	{
 		if ( !\is_scalar($value) )
 			return;
 
-		$value = \trim($value);
+		$value = $trim($value);
 	});
 
 	$array = \array_filter($array, function($value)
 	{
 		if ( !\is_scalar($value) )
 			return true;
-		return $value !== "";
+		return is_string($value) && !$empty_lines ? $value !== "" : true;
 	});
 
 	return true;
