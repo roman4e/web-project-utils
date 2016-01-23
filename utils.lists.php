@@ -31,9 +31,22 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	const RET_VALUE=0;
 	const RET_BOTH=2;
 
+	const INSERT_BEFORE_HEAD=1;
+	const INSERT_AFTER_TAIL=2;
+	const INSERT_DEFAULT=0;
+
+	const SEEK_BOTH=3;
+	const SEEK_BEFORE=1;
+	const SEEK_AFTER=2;
+
+	private $insert_next_counter = 0;
+	private $insert_prev_counter = 0;
+	public $insert_flag = self::INSERT_DEFAULT;
+
 	// ------------------------------------------------------------------------
 	public function __construct()
 	{
+		// $this->reset_insert_counters();
 	}
 
 	// ------------------------------------------------------------------------
@@ -56,6 +69,17 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 		return $this->current;
 	}
 
+	// private function reset_insert_counters()
+	// {
+	// 	// $this->insert_next_counter   = 0;
+	// 	// $this->insert_prev_counter = 0;
+	// 	$this->insert_flag = $this->insert_flag;
+	// 	if ( $this->current === null )
+	// 		return;
+	// 	$this->list[$this->current]($this)->insert_shift_left  = 0;
+	// 	$this->list[$this->current]($this)->insert_shift_right = 0;
+	// }
+
 	// ------------------------------------------------------------------------
 	// * move internal pointer to the next element
 	public function next()
@@ -64,6 +88,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 			$this->current = $this->list[$this->current]($this)->next;
 		else
 			$this->current = null;
+		// $this->reset_insert_counters();
 	}
 
 	// ------------------------------------------------------------------------
@@ -74,6 +99,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 			$this->current = $this->list[$this->current]($this)->prev;
 		else
 			$this->current = null;
+		// $this->reset_insert_counters();
 	}
 
 	// ------------------------------------------------------------------------
@@ -81,6 +107,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	public function rewind()
 	{
 		$this->current = $this->top;
+		// $this->reset_insert_counters();
 	}
 
 	// ------------------------------------------------------------------------
@@ -95,6 +122,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// * set internal pointer to the last element
 	public function last()
 	{
+		$this->reset_insert_counters();
 		$this->current = $this->bottom;
 	}
 
@@ -233,6 +261,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 		if ( $this->current === $ofs )
 		{
 			$this->current = $item->next !== null ? $item->next : ($item->prev !== null ? $item->prev : null );
+			// $this->reset_insert_counters();
 		}
 // var_dump($before,$after,$this->current);
 		if ( $remove )
@@ -319,17 +348,18 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 
 		if ( $this->top === null )
 			$this->top = $key;
-		// $this->current = $key;	// it might be mistake to set current here
+		// $this->current = $key;	// it might be a mistake to set current here
 	}
 
 	// ------------------------------------------------------------------------
 	// * insert new pair key=>value before some key
 	public function insert_before($ofs,$key,$value)
 	{
-		$after  = &$this->offset($ofs);
-		$before = &$this->offset($after->prev);
+		// $after  = &$this->offset($ofs);
+		// $before = &$this->offset($after->prev);
 		$new    = $this->new_elem($key,$value);
-		$this->insert_item_between($before,$after,$new);
+		// $this->insert_item_between($before,$after,$new);
+		$this->insert_item_before($ofs,$new);
 		return $new;
 	}
 
@@ -337,8 +367,32 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	public function insert_item_before($ofs,DoublyLinkedElement &$item)
 	{
 		$after = &$this->offset($ofs);
+
+		if ( $this->insert_flag & self::INSERT_BEFORE_HEAD )
+		{
+			$after0 = &$this->offset($ofs);
+			$shift_count = $after->insert_shift_left($this)+1;
+		}
+
 		$before = &$this->offset($after->prev);
+		$_ofs = $ofs;
+
+		if ( $this->insert_flag & self::INSERT_BEFORE_HEAD )
+		for ( $shift=0; $shift<$shift_count; $shift++)
+		{
+			$ofs = $before->key;
+			$after = &$this->offset($_ofs);
+			$before = &$this->offset($after->prev);
+			if ( $before->key === null )
+				break;
+			$_ofs = $before->key;
+		}
+
 		$this->insert_item_between($before,$after,$item);
+
+		if ( $this->insert_flag & self::INSERT_BEFORE_HEAD )
+			$after0->insert_shift_left($this,1);
+
 		return $item;
 	}
 
@@ -369,18 +423,41 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// * insert new pair key=>value after some key
 	public function insert_after($ofs,$key,$value)
 	{
-		$before = &$this->offset($ofs);
-		$after  = &$this->offset($before->next);
+		// $before = &$this->offset($ofs);
+		// $after  = &$this->offset($before->next);
 		$new    = $this->new_elem($key,$value);
-		$this->insert_item_between($before,$after,$new);
+		// $this->insert_item_between($before,$after,$new);
+		$this->insert_item_after($ofs,$new);
 		return $new;
 	}
 
 	public function insert_item_after($ofs, DoublyLinkedElement &$item)
 	{
 		$before = &$this->offset($ofs);
+		if ( $this->insert_flag & self::INSERT_AFTER_TAIL )
+		{
+			$before0 = &$this->offset($ofs);
+			$shift_count = $before->insert_shift_right($this)+1;
+		}
+
 		$after  = &$this->offset($before->next);
+		$_ofs = $ofs;
+
+		if ( $this->insert_flag & self::INSERT_AFTER_TAIL )
+		for ( $shift=0; $shift < $shift_count; $shift++ )
+		{
+			$before = &$this->offset($ofs);
+			$after  = &$this->offset($before->next);
+			if ( $after->key === null )
+				break;
+			$ofs = $after->key;
+		}
+
 		$this->insert_item_between($before,$after,$item);
+
+		if ( $this->insert_flag & self::INSERT_AFTER_TAIL )
+			$before0->insert_shift_right($this,1);
+
 		return $item;
 	}
 	// ------------------------------------------------------------------------
@@ -400,6 +477,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// ------------------------------------------------------------------------
 	protected function slice($ofs,$count)
 	{
+		$this->reset_insert_counters();
 		$slice = [];
 		$n = 0;
 
@@ -625,9 +703,62 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	{
 		return $this->item($ofs);
 	}
+
+	// * Find the distance between two offsets
+	// Helpful for checking item order
+	public function distance($ofs,$ofs2,$seekway=self::SEEK_BOTH)
+	{
+		$item2 = &$this->offset($ofs2);
+
+		if ( $seekway & self::SEEK_BEFORE )
+		{
+			$item  = &$this->offset($ofs);
+			$shift = 0;
+			while ( $item->prev !== null )
+			{
+				if ( $item->key === $item2->key )
+					return $shift;
+				$item = &$this->offset($item->prev);
+				$shift--;
+			}
+		}
+		if ( $seekway & self::SEEK_AFTER )
+		{
+			$item  = &$this->offset($ofs);
+			$shift = 0;
+			while ( $item->next !== null )
+			{
+				if ( $item->key === $item2->key )
+					return $shift;
+				$item = &$this->offset($item->next);
+				$shift++;
+			}
+		}
+		return false;
+	}
+
+	// * Look for n-th sibling to $ofs moving forward ($distance>0) or backward ($distance<0)
+	public function lookup($ofs,$distance=1)
+	{
+		$item = &$this->offset($ofs);
+
+		if ( $distance < 0)
+			$move = 1;
+		else
+			$move = -1;
+
+		while ( $distance && $item->key !== null )
+		{
+			$item = &$this->offset($item->{$move>0?'prev':'next'});
+			$distance += $move;
+		}
+
+		return $item;
+	}
 }
 
 // ================================================================================================
+// * DoublyLinkedElement
 // ================================================================================================
 
 class DoublyLinkedElement
@@ -640,6 +771,8 @@ class DoublyLinkedElement
 	private $group;
 	private $fake = false;
 	private $allow_set = false;
+	private $insert_shift_left  = 0;
+	private $insert_shift_right = 0;
 
 	public function __construct(DoublyLinked $owner,$init_values=null)
 	{
@@ -729,9 +862,44 @@ class DoublyLinkedElement
 		$this->allow_set = true;
 		return $this;
 	}
+
+	public function insert_shift_left(DoublyLinked &$owner,$dif_left=null)
+	{
+		if ( is_null($dif_left) )
+		{
+			return $this->insert_shift_left;
+		}
+		$this->insert_shift_left += $dif_left;
+	}
+
+	public function insert_shift_right(DoublyLinked &$owner,$dif_right=null)
+	{
+		if ( is_null($dif_right) )
+		{
+			return $this->insert_shift_right;
+		}
+		$this->insert_shift_right += $dif_right;
+
+	}
+
+	public function is_before($ofs)
+	{
+		return $this->owner->distance($this->key,$ofs) > 0;
+	}
+
+	public function is_after($ofs)
+	{
+		return $this->owner->distance($this->key,$ofs) < 0;
+	}
+
+	public function lookup($distance=1)
+	{
+		return $this->owner->lookup($this->key,$distance);
+	}
 }
 
 // ================================================================================================
+// * DoublyLinkedGroup
 // ================================================================================================
 
 class DoublyLinkedGroup implements \ArrayAccess, \Countable
@@ -854,4 +1022,5 @@ class DoublyLinkedGroup implements \ArrayAccess, \Countable
 		if ( $r=$this->has($ofs) )
 			return $this->owner->item($this->items[$r]);
 	}
+
 }
