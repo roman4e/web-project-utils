@@ -523,7 +523,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// }
 
 	// ------------------------------------------------------------------------
-	public function move_after($ofs,$after_key)
+	public function move_after($after_key,$ofs)
 	{
 		$item = $this->free_item($ofs);
 
@@ -536,7 +536,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	}
 
 	// ------------------------------------------------------------------------
-	public function move_before($ofs,$before_key)
+	public function move_before($before_key,$ofs)
 	{
 		$item = $this->free_item($ofs);
 
@@ -838,22 +838,22 @@ class DoublyLinkedElement
 
 	public function move_before($ofs)
 	{
-		return $this->owner->move_before($this->key,$ofs);
+		return $this->owner->move_before($ofs,$this->key);
 	}
 
 	public function move_after($ofs)
 	{
-		return $this->owner->move_after($this->key,$ofs);
+		return $this->owner->move_after($ofs,$this->key);
 	}
 
 	public function move_top()
 	{
-		return $this->owner->move_before($this->key,$this->owner->top_key());
+		return $this->owner->move_before($this->owner->top_key(),$this->key);
 	}
 
 	public function move_bottom()
 	{
-		return $this->owner->move_after($this->key,$this->owner->bottom_key());
+		return $this->owner->move_after($this->owner->bottom_key(),$this->key);
 	}
 
 	public function insert_after($key,$value)
