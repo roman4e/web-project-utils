@@ -56,9 +56,9 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 		switch ( $ret )
 		{
 		default:
-		case self::RET_VALUE: return $this->list[$this->current]($this)->value;
+		case self::RET_VALUE: return $this->list[$this->current]->value;
 		case self::RET_KEY:   return $this->current;
-		case self::RET_BOTH:  return [$this->current,$this->list[$this->current]($this)->value];
+		case self::RET_BOTH:  return [$this->current,$this->list[$this->current]->value];
 		}
 	}
 
@@ -84,8 +84,8 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// * move internal pointer to the next element
 	public function next()
 	{
-		if ( $this->list[$this->current]($this)->next !== null )
-			$this->current = $this->list[$this->current]($this)->next;
+		if ( $this->list[$this->current]->next !== null )
+			$this->current = $this->list[$this->current]->next;
 		else
 			$this->current = null;
 		// $this->reset_insert_counters();
@@ -95,8 +95,8 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// * move internal pointer to the previous element
 	public function prev()
 	{
-		if ( $this->list[$this->current]($this)->prev !== null )
-			$this->current = $this->list[$this->current]($this)->prev;
+		if ( $this->list[$this->current]->prev !== null )
+			$this->current = $this->list[$this->current]->prev;
 		else
 			$this->current = null;
 		// $this->reset_insert_counters();
@@ -131,7 +131,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	public function top()
 	{
 		$item = $this->offset($this->top);
-		return $item($this)->value;
+		return $item->value;
 	}
 
 	// ------------------------------------------------------------------------
@@ -164,9 +164,9 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 		switch ( $ret )
 		{
 		default:
-		case self::RET_VALUE: return $item($this)->value;
+		case self::RET_VALUE: return $item->value;
 		case self::RET_KEY:   return $ofs;
-		case self::RET_BOTH:  return [$ofs,$item($this)->value];
+		case self::RET_BOTH:  return [$ofs,$item->value];
 		}
 	}
 
@@ -182,14 +182,15 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	public function bottom()
 	{
 		$item = $this->offset($this->bottom);
-		return $item($this)->value;
+		return $item->value;
 	}
 
 	// ------------------------------------------------------------------------
 	// * return value by offset
 	public function offsetGet($ofs)
 	{
-		return isset($this->list[$ofs]) ? $this->list[$ofs]->value : null;
+		return !is_null($ofs) && isset($this->list[$ofs])
+			? $this->list[$ofs]->value : null;
 	}
 
 	// ------------------------------------------------------------------------
@@ -197,6 +198,8 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// if element was not in list it become last element
 	public function offsetSet($ofs,$value)
 	{
+		if ( is_null($ofs) )
+			return;
 		if ( $this->offsetExists($ofs) )
 			$this->list[$ofs]($this)->value = $value;
 		else
@@ -595,7 +598,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 //	}
 
 	// ------------------------------------------------------------------------
-	public function group_move_after($group_name,$after_key)
+	public function group_move_after($after_key,$group_name)
 	{
 		if ( !isset($this->groups[$group_name]) )
 			return $this;
@@ -606,11 +609,11 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 		{
 			if ( $n === 0 )
 			{
-				$this->move_after($item_key,$after_key);
+				$this->move_after($after_key,$item_key);
 			}
 			else
 			{
-				$this->move_after($item_key,$prev);
+				$this->move_after($prev,$item_key);
 			}
 			$prev = $item_key;
 			$n++;
@@ -618,28 +621,28 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 		return $this;
 	}
 
-	public function group_move_before($group_name,$before_key)
+	public function group_move_before($before_key,$group_name)
 	{
 		if ( !isset($this->groups[$group_name]) )
 			return $this;
 		foreach ( $this->groups[$group_name] as $item_key )
 		{
-			$this->move_before($item_key,$before_key);
+			$this->move_before($before_key,$item_key);
 		}
 		return $this;
 	}
 
 	public function group_move_top($group_name)
 	{
-		return $this->group_move_before($group_name,$this->top_key());
+		return $this->group_move_before($this->top_key(),$group_name);
 	}
 
 	public function group_move_bottom($group_name)
 	{
-		return $this->group_move_after($group_name,$this->bottom_key());
+		return $this->group_move_after($this->bottom_key(),$group_name);
 	}
 
-	// ------------------------------------------------------------------------
+	// ----------------------------------------------------s--------------------
 	public function group_set(DoublyLinkedElement &$elem,$group_name=null)
 	{
 		$ofs = $elem->key;
@@ -895,7 +898,7 @@ class DoublyLinkedElement
 
 	public function __get($p)
 	{
-		return $this->$p;
+		return $this->{$p};
 	}
 
 	public function __invoke(DoublyLinked $owner)
