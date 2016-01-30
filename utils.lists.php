@@ -122,7 +122,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// * set internal pointer to the last element
 	public function last()
 	{
-		$this->reset_insert_counters();
+//		$this->reset_insert_counters();
 		$this->current = $this->bottom;
 	}
 
@@ -233,6 +233,11 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	public function item($ofs)
 	{
 		return $this->offset($ofs);
+	}
+
+	public function current_item()
+	{
+		return $this->offset($this->current);
 	}
 
 	// ------------------------------------------------------------------------
@@ -486,7 +491,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// May be deprecated
 	protected function slice($ofs,$count)
 	{
-		$this->reset_insert_counters();
+//		$this->reset_insert_counters();
 		$slice = [];
 		$n = 0;
 
@@ -643,13 +648,18 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	}
 
 	// ----------------------------------------------------s--------------------
+	// * Set item in group or update groups with item's key
 	public function group_set(DoublyLinkedElement &$elem,$group_name=null)
 	{
 		$ofs = $elem->key;
 
 		if ( $this->offsetExists($ofs) )
 		{
-			// $ofs = $this->current;
+			$old_group = $elem->group;
+			// must remove from old group until implemented multigrouping
+			if ( isset($this->groups[$old_group]) && ($grp_idx=array_search($ofs,$this->groups[$old_group]))!==false )
+				unset($this->groups[$old_group][$grp_idx]);
+
 			if ( $group_name !== null )
 				$elem($this)->group = $group_name;
 			else
@@ -666,6 +676,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	}
 
 	// ------------------------------------------------------------------------
+	// * Remove item from group
 	public function group_unset(DoublyLinkedElement &$elem,$group_name=null)
 	{
 		$ofs = $elem->key;
@@ -691,7 +702,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// * Remove elements from group
 	public function drop_group($group_name)
 	{
-		if ( !isset($this->groups[$group_name]) )
+		if ( $group_name === null || !isset($this->groups[$group_name]) )
 			return false;
 
 		foreach ( $this->groups[$group_name] as $ofs )
@@ -706,7 +717,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// ------------------------------------------------------------------------
 	public function group_sort($group_name,$cb=null,$sort_method = null)
 	{
-		if ( !isset($this->groups[$group_name]) )
+		if ( $group_name === null || !isset($this->groups[$group_name]) )
 			return $this;
 
 		if ( \is_null($sort_method) )
@@ -726,7 +737,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	// * Erase all elements from list with specific group name
 	public function group_erase($group_name)
 	{
-		if ( !isset($this->groups[$group_name]) )
+		if ( $group_name === null || !isset($this->groups[$group_name]) )
 			return $this;
 
 		foreach ( $this->groups[$group_name] as $item_key )
@@ -736,6 +747,26 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 
 		$this->drop_group($group_name);
 		return $this;
+	}
+
+	public function group_count($group_name)
+	{
+		if ( $group_name === null || !isset($this->groups[$group_name]) )
+			return null;
+		return count($this->groups[$group_name]);
+	}
+
+	public function group_is_empty($group_name)
+	{
+		return ( $group_name === null || empty($this->groups[$group_name]) );
+	}
+
+	// * Return keys which are in group
+	public function group_items($group_name)
+	{
+		if ( $group_name === null || !isset($this->groups[$group_name]) )
+			return null;
+		return $this->groups[$group_name];
 	}
 
 	public function __invoke($ofs)
@@ -835,8 +866,13 @@ class DoublyLinkedElement
 
 	public function group_set($group_name)
 	{
-		$this->group = $group_name;
+//		$this->group = $group_name;
 		return $this->owner->group_set($this,$group_name);
+	}
+
+	public function group_unset($group_name=null)
+	{
+		return $this->owner->group_unset($this,$group_name);
 	}
 
 	public function move_before($ofs)
