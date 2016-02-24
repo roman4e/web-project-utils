@@ -11,7 +11,7 @@ function print_r(DoublyLinked $dl)
 	$nr = php_sapi_name() === "cli" ? "\n" : "<br>";
 	$num = 0;
 	echo "Doubly linked count ".$dl->count().$nr;
-	$ck = $dl->current($dl::KEY);
+	$ck = $dl->current($dl::RET_KEY);
 	$dl->rewind();
 	while ( $dl->valid() )
 	{
@@ -40,21 +40,22 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	private $shift_left = [];
 	private $shift_right = [];
 
+	// inner consts
 	const KEY="key";
 	const VALUE="value";
 	const PREV="prev";
 	const NEXT="next";
 	const GROUP="group";
 	const FAKE="fake";
-
+	// used as argument to function which must return one of key, value or both/pair
 	const RET_KEY=1;
 	const RET_VALUE=0;
 	const RET_BOTH=2;
-
+	// flag changes insertion behavior
 	const INSERT_BEFORE_HEAD=1;
 	const INSERT_AFTER_TAIL=2;
 	const INSERT_DEFAULT=0;
-
+	// lookup flags
 	const SEEK_BOTH=3;
 	const SEEK_BEFORE=1;
 	const SEEK_AFTER=2;
@@ -98,17 +99,6 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 		}
 		return false;
 	}
-
-	// private function reset_insert_counters()
-	// {
-	// 	// $this->insert_next_counter   = 0;
-	// 	// $this->insert_prev_counter = 0;
-	// 	$this->insert_flag = $this->insert_flag;
-	// 	if ( $this->current === null )
-	// 		return;
-	// 	$this->list[$this->current]($this)->insert_shift_left  = 0;
-	// 	$this->list[$this->current]($this)->insert_shift_right = 0;
-	// }
 
 	// ------------------------------------------------------------------------
 	// * move internal pointer to the next element
@@ -271,7 +261,7 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 	}
 
 	// ------------------------------------------------------------------------
-	// * Remove $ofs item from list and collapse left empty space between siblings
+	// * Remove $ofs item from list and collapse to left empty space between siblings
 	private function free_item($ofs,$remove=false)
 	{
 // var_dump("UNSET({$ofs})");
@@ -311,7 +301,13 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 
 		if ( $this->current === $ofs )
 		{
-			$this->current = $item->next !== null ? $item->next : ($item->prev !== null ? $item->prev : null );
+			switch ( true )
+			{
+				case $item->next !== null: $this->current = $item->next; break;
+				case $item->prev !== null: $this->current = $item->prev; break;
+				case $this->top  !== null: $this->current = $this->top;  break;
+				default: 				   $this->current = null;
+			}
 			// $this->reset_insert_counters();
 		}
 // var_dump($before,$after,$this->current);
@@ -824,8 +820,10 @@ class DoublyLinked implements \Iterator, \ArrayAccess, \Countable
 		return $this->groups[$group_name];
 	}
 
-	public function __invoke($ofs)
+	public function __invoke($ofs=null)
 	{
+		if ( $ofs === null )
+			$ofs = $this->current;
 		return $this->item($ofs);
 	}
 

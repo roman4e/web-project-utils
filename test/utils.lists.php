@@ -6,7 +6,7 @@ use Utils\Lists\DoublyLinked;
 use function Utils\Lists\print_r as list_print_r;
 
 $dl = new DoublyLinked();
-echo "insert top_key, bottom_key\n";
+echo "insert top_key, bottom_key",__LINE__,"\n";
 $dl->insert_top("top_key","top_value");
 assert($dl['top_key']==="top_value");
 //var_dump("top_key_VALUE={$dl['top_key']}");
@@ -15,7 +15,7 @@ assert($dl['bottom_key']==="bottom_value");
 assert($dl('bottom_key')->prev === "top_key");
 //var_dump("bottom_key_VALUE={$dl['bottom_key']}");
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "insert second_key,pre_last_key,super_bottom,super_top\n";
 $dl->insert_after("top_key","second_key","second_value");
 $dl->insert_before("bottom_key","pre_last_key","pre_last_value");
@@ -24,53 +24,58 @@ $dl->insert_top("super_top","super_value");
 assert($dl["super_bottom"] === "super_value");
 
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "delete second_key\n";
 unset($dl['second_key']);
 assert($dl['second_key']===null);
 
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "traverse foreach:\n";
 foreach ( $dl as $key=>$value )
 {
 	echo "$key = $value\n";
 }
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "Insert few elements and make a move group on the top:\n";
 $dl->insert_after("pre_last_key","group_key_1","group_value_1")->group_set("group1");
 $dl->insert_after("undefined","group_key_5","group_value_5")->group_set("group1");	// must appear as a last element
 $dl->insert_after("group_key_1","group_key_4","group_value_4")->group_set("group1") // this case is to move futher right way
 	->insert_after("group_key_2","group_value_2")->group_set("group1")
 	->insert_after("group_key_3","group_value_3")->group_set("group1");
+echo "Current key = ",$dl->current($dl::RET_KEY),"\n";
 
 list_print_r($dl);
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "Move group_key_4 after group_key_3\n";
 $dl("group_key_4")->move_after("group_key_3");
+echo "Current key = ",$dl->current($dl::RET_KEY),"\n";
 assert($dl("group_key_4")->prev === "group_key_3");
 assert($dl("group_key_3")->next === "group_key_4");
 
 list_print_r($dl);
 
 //exit;
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "Move whole group1 on the top\n";
+echo "Current key = ",$dl->current($dl::RET_KEY),"\n";
 $dl->group_sort("group1")->group_move_top("group1");
 assert($dl->top() === "group_value_1");
+echo "Current key = ",$dl->current($dl::RET_KEY),"\n";
 
 list_print_r($dl);
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "Erase all elements marked group1\n";
 $dl->group_erase("group1");
+echo "Current key = ",$dl->current($dl::RET_KEY),"\n";
 assert($dl->top() === "super_value");
 
 list_print_r($dl);
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "traverse by shift/pop:\n";
 $dl->rewind();
 while ( $dl->valid() )
@@ -81,7 +86,7 @@ while ( $dl->valid() )
 assert($dl->count()===0);
 echo "Current count: ",$dl->count(),"\n";
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "insert top, bottom and few elements after, set INSERT_AFTER_LAST flag\n";
 $dl->insert_top("simple_top","top_value_1");
 $dl->insert_bottom("simple_bottom","bottom_value_1");
@@ -96,7 +101,7 @@ $dl->insert_after("simple_top","next_2","value_2");
 echo "Insert value_3 after simple_top\n";
 $dl->insert_after("simple_top","next_3","value_3");
 
-echo "Set INSERT_BEFORE_FIRST\n";
+echo "Set INSERT_BEFORE_FIRST ",__LINE__,"\n";
 $dl->insert_flag = $dl::INSERT_BEFORE_HEAD;
 echo "Insert value_4 before simple_top\n";
 $dl->insert_before("simple_top","before_1","value_4");
@@ -106,21 +111,21 @@ echo "Insert value_6 before simple_top\n";
 $dl->insert_before("simple_top","before_3","value_6");
 
 assert($dl->item("next_2")->prev === "next_1" && $dl->item("next_2")->next === "next_3");
-echo "Remove bottom\n";
+echo "Remove bottom","\n";
 unset($dl["simple_bottom"]);
 
-echo "Traverse foreach:\n";
+echo "Traverse foreach: ",__LINE__,"\n";
 list_print_r($dl);
 
-echo "Reset insert flag\n";
+echo "Reset insert flag",__LINE__,"\n";
 $dl->insert_flag = $dl::INSERT_DEFAULT;
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "insert after undefined element\n";
 $dl->insert_after("undefined","hack_item","hack_value");
 $dl->insert_before("undefined","hack_item_2","hack_value_2");
 
-echo "traverse foreach:\n";
+echo "traverse foreach: ",__LINE__,"\n";
 list_print_r($dl);
 // $n=0;
 // foreach ( $dl as $key=>$value )
@@ -130,7 +135,7 @@ list_print_r($dl);
 // }
 // unset($n);
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "Distances\n";
 $dist = $dl->distance("next_2","before_2",$dl::SEEK_BOTH);
 assert($dist === -4);
@@ -148,7 +153,7 @@ assert($item->key === "before_1");
 echo "5th element before hack_item is ".$item->key."\n";
 unset($item);
 
-echo "---\n";
+echo "---",__LINE__,"\n";
 echo "Moving\n";
 $item = $dl->insert_before("hack_item","to_move_item","moving value");
 echo "Previous to new item named 'to_move_item' is ".$item->prev." and next to is ".$item->next."\n";
