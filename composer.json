@@ -1,0 +1,41 @@
+{
+    "name": "roman4e/lib-utils",
+    "type": "library",
+    "description": "Some utils",
+    "keywords": [
+        "file system",
+        "array",
+        "coalesce",
+        "list",
+        "timing",
+        "string"
+    ],
+    "homepage": "http://example.com/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Roman4e",
+            "email": "roman4e@gmail.com"
+        }
+    ],
+    "support": {
+        "email": "roman4e@gmail.com",
+        "wiki": "https://github.com/roman4e/DoctrineExtensions/tree/master/doc"
+    },
+    "require": {
+        "php": ">=7.0.0"
+    },
+    "require-dev": {
+    },
+    "suggest": {
+    },
+    "autoload": {
+    },
+    "config": {
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
+}
