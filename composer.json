@@ -1,5 +1,6 @@
 {
     "name": "roman4e/lib-utils",
+    "version": "1.0.0",
     "type": "library",
     "description": "Some utils",
     "keywords": [
@@ -20,18 +21,15 @@
     ],
     "support": {
         "email": "roman4e@gmail.com",
-        "wiki": "https://github.com/roman4e/DoctrineExtensions/tree/master/doc"
+        "wiki": "https://github.com/roman4e/tree/master/doc"
     },
     "require": {
-        "php": ">=7.0.0"
-    },
-    "require-dev": {
-    },
-    "suggest": {
-    },
-    "autoload": {
+        "php": "^7.0"
     },
     "config": {
+        "platform": {
+            "php": "7.0.0"
+        }
     },
     "extra": {
         "branch-alias": {
