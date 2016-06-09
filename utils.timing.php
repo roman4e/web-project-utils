@@ -14,13 +14,16 @@ class Timestamp
 
 	static public $round = 5; // digits
 
-
+	// * new timer
 	protected function __construct()
 	{
-		$this->points["@"] = [0=>[$this->step++,microtime(true),null,null]];
+		//                          step          time          prevstep  prevtime disposition
+		$this->points["@"] = [0=>[$this->step++,microtime(true),null,null,null]];
+		//             name stepsnum step
 		$this->prev = ["@",0,$this->step-1];
 	}
 
+	// * set checkpoint 
 	protected function point($name)
 	{
 		if ( $this->paused !== false || $this->done !== false )
@@ -36,7 +39,8 @@ class Timestamp
 		$this->prev = [$name,count($pt)-1,$this->step-1];
 		$this->disposition = 0;
 	}
-
+	
+	// * switch timer
 	static public function activate($n)
 	{
 		if ( !isset(self::$times[$n]) )
@@ -45,7 +49,17 @@ class Timestamp
 		}
 		self::$cur = &self::$times[$n];
 	}
+	
+	// * start working
+	// start timer #0 or do nothing
+	// any other timers must be activated with activate(n) 
+	static public function start()
+	{
+		if ( !count(self::$times) )
+			self::activate(0);
+	}
 
+	// * set checkpoint
 	static public function checkpoint($name)
 	{
 		self::$cur->point($name);
@@ -121,6 +135,7 @@ class Timestamp
 		return $report;
 	}
 
+	// * pause current or specific timer
 	static public function pause($n=-1)
 	{
 		if ( $n === -1 )
@@ -136,6 +151,7 @@ class Timestamp
 		}
 	}
 
+	// * resume current or specific timer
 	static public function resume($n=-1)
 	{
 		if ( $n === -1 && self::$cur->paused !== false )
@@ -158,6 +174,8 @@ class Timestamp
 		}
 	}
 
+	// * stop current or specific timer
+	// timer cannot be continued
 	static public function stop($n=-1)
 	{
 		if ( $n < 0 )
@@ -175,6 +193,7 @@ class Timestamp
 		}
 	}
 
+	// * stop all timers
 	static public function stop_all()
 	{
 		foreach ( self::$times as $key=>$t )
@@ -182,4 +201,5 @@ class Timestamp
 	}
 }
 
-Timestamp::activate(0);
+//deprecated autostart
+//Timestamp::activate(0);

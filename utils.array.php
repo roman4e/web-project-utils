@@ -99,3 +99,22 @@ function coalescea_key_nf(array $arr)
 	}
 	return null;
 }
+
+// * Check the variable to be an empty array
+// Optionally check second arg not to be index of array
+// fail if not empty array but if success if just empty <any> variable
+// # true or false
+function emptyakey(&$arr)
+{
+	if ( empty($arr) )
+		return true;
+	if ( !is_array($arr) || $func_num_args() < 2 )
+		return false;
+	return !array_key_exists($key, $arr);
+}
+
+//* Check the second arg to be index of array and is array
+function aofa(&$arr,$key)
+{
+	return !(emptyarr($arr,$key) || !is_array($arr) || is_array($arr[$key]));
+}
